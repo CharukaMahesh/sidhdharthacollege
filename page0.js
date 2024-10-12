@@ -1,143 +1,92 @@
 import { firebaseConfig } from './config.js';
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const firestore = firebase.firestore();
-const signupForm = document.querySelector('.registration.form');
-const loginForm = document.querySelector('.login.form');
-const forgotForm = document.querySelector('.forgot.form');
-const signupBtn = document.querySelector('.signupbtn');
-const loginBtn = document.querySelector('.loginbtn');
-const forgotBtn = document.querySelector('.forgotbtn');
-const googleLoginBtn = document.querySelector('#googleLogin');
-const googleSignupBtn = document.querySelector('#googleSignup');
+firebase.initializeApp(firebaseConfig);
 
-// Handle anchor tags to toggle between forms
-const anchors = document.querySelectorAll('a');
-anchors.forEach(anchor => {
-  anchor.addEventListener('click', () => {
-    const id = anchor.id;
-    switch (id) {
-      case 'loginLabel':
-        signupForm.style.display = 'none';
-        loginForm.style.display = 'block';
-        forgotForm.style.display = 'none';
-        break;
-      case 'signupLabel':
-        signupForm.style.display = 'block';
-        loginForm.style.display = 'none';
-        forgotForm.style.display = 'none';
-        break;
-      case 'forgotLabel':
-        signupForm.style.display = 'none';
-        loginForm.style.display = 'none';
-        forgotForm.style.display = 'block';
-        break;
-    }
-  });
-});
+const auth = firebase.auth();
+const storage = firebase.storage();
+
+// Function to switch forms
+const toggleForms = (showSignup) => {
+  const loginForm = document.querySelector('.login.form');
+  const signupForm = document.querySelector('.registration.form');
+
+  if (showSignup) {
+    loginForm.style.display = 'none';
+    signupForm.style.display = 'block';
+  } else {
+    loginForm.style.display = 'block';
+    signupForm.style.display = 'none';
+  }
+};
+
+// Event listeners for toggling forms
+document.getElementById('signupLabel').addEventListener('click', () => toggleForms(true));
+document.getElementById('loginLabel').addEventListener('click', () => toggleForms(false));
 
 // Handle Signup
-signupBtn.addEventListener('click', () => {
-  const name = document.querySelector('#name').value;
-  const username = document.querySelector('#username').value;
-  const email = document.querySelector('#email').value.trim();
-  const password = document.querySelector('#password').value;
+document.querySelector('.signupbtn').addEventListener('click', () => {
+  const name = document.getElementById('name').value;
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const profilePhoto = document.getElementById('profilePhoto').files[0]; // Get the file
 
+  if (!name || !email || !password || !profilePhoto) {
+    alert('Please fill out all fields, including uploading a profile photo.');
+    return;
+  }
+
+  // Create user with email and password
   auth.createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
+    .then(userCredential => {
       const user = userCredential.user;
-      const uid = user.uid;
-      user.sendEmailVerification()
-        .then(() => {
-          alert('Verification email sent. Please check your inbox and verify your email before signing in.');
-        })
-        .catch((error) => {
-          alert('Error sending verification email: ' + error.message);
-        });
-      firestore.collection('users').doc(uid).set({
-        name: name,
-        username: username,
-        email: email,
-      });
-      signupForm.style.display = 'none';
-      loginForm.style.display = 'block';
-      forgotForm.style.display = 'none';
+      const storageRef = storage.ref(`profilePhotos/${user.uid}`); // Store with user ID
+      const uploadTask = storageRef.put(profilePhoto); // Upload the profile photo
+
+      uploadTask.on('state_changed',
+        (snapshot) => {
+          // Progress bar logic (optional)
+        },
+        (error) => {
+          console.error('Error uploading profile photo:', error);
+        },
+        () => {
+          // Get the download URL of the uploaded photo
+          uploadTask.snapshot.ref.getDownloadURL().then(downloadURL => {
+            // Update user profile with the name and photo URL
+            user.updateProfile({
+              displayName: name,
+              photoURL: downloadURL
+            }).then(() => {
+              console.log('User profile updated successfully!');
+              // Redirect or show success message
+              alert('Signup successful!');
+              // Optionally redirect to another page
+              // window.location.href = "profile.html"; // Redirect after signup
+            }).catch(error => {
+              console.error('Error updating profile:', error);
+            });
+          });
+        }
+      );
     })
-    .catch((error) => {
-      alert('Error signing up: ' + error.message);
+    .catch(error => {
+      console.error('Error signing up:', error.message);
+      alert('Signup failed: ' + error.message);
     });
 });
 
 // Handle Login
-loginBtn.addEventListener('click', () => {
-  const email = document.querySelector('#inUsr').value.trim();
-  const password = document.querySelector('#inPass').value;
+document.querySelector('.loginbtn').addEventListener('click', () => {
+  const email = document.getElementById('inUsr').value;
+  const password = document.getElementById('inPass').value;
 
   auth.signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
-      const user = userCredential.user;
-      if (user.emailVerified) {
-        console.log('User is signed in with a verified email.');
-        location.href = "signout.html";
-      } else {
-        alert('Please verify your email before signing in.');
-      }
+      console.log('Login successful!', userCredential.user);
+      // Optionally redirect to another page
+      // window.location.href = "profile.html"; // Redirect after login
     })
     .catch((error) => {
-      alert('Error signing in: ' + error.message);
-    });
-});
-
-// Handle Forgot Password
-forgotBtn.addEventListener('click', () => {
-  const emailForReset = document.querySelector('#forgotinp').value.trim();
-  if (emailForReset.length > 0) {
-    auth.sendPasswordResetEmail(emailForReset)
-      .then(() => {
-        alert('Password reset email sent. Please check your inbox to reset your password.');
-        signupForm.style.display = 'none';
-        loginForm.style.display = 'block';
-        forgotForm.style.display = 'none';
-      })
-      .catch((error) => {
-        alert('Error sending password reset email: ' + error.message);
-      });
-  }
-});
-
-// Initialize Google Auth Provider
-const provider = new firebase.auth.GoogleAuthProvider();
-
-// Handle Google Login
-googleLoginBtn.addEventListener('click', () => {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const user = result.user;
-      console.log('Google user signed in:', user);
-      location.href = "signout.html"; // Redirect after login
-    })
-    .catch((error) => {
-      console.error('Error during Google login:', error);
-      alert('Error during Google login: ' + error.message);
-    });
-});
-
-// Handle Google Signup
-googleSignupBtn.addEventListener('click', () => {
-  auth.signInWithPopup(provider)
-    .then((result) => {
-      const user = result.user;
-      const uid = user.uid;
-      firestore.collection('users').doc(uid).set({
-        name: user.displayName,
-        email: user.email,
-        googleUser: true
-      });
-      console.log('Google user signed up and saved to Firestore:', user);
-      location.href = "signout.html"; // Redirect after signup
-    })
-    .catch((error) => {
-      console.error('Error during Google signup:', error);
-      alert('Error during Google signup: ' + error.message);
+      console.error('Error logging in:', error.message);
+      alert('Login failed: ' + error.message);
     });
 });
