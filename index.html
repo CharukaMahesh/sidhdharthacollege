@@ -37,8 +37,10 @@
       <form action="#">
         <input type="text" id="name" placeholder="Enter your name">
         <input type="text" id='username' placeholder="Enter your username">
-        <input type="text" id='email' placeholder="Enter your email">
+        <input type="email" id='email' placeholder="Enter your email">
         <input type="password" id='password' placeholder="Create a password">
+        <!-- Profile photo upload -->
+        <input type="file" id="profilePhoto" accept="image/*">
         <input type="button" class="button signupbtn" value="Signup">
         <!-- Google Sign-Up Button -->
         <input type="button" class="button google-signup" value="Signup with Google" id="googleSignup">
@@ -72,7 +74,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="page0.js" type="module"></script>
 </body>
-</html>
+  </html>
