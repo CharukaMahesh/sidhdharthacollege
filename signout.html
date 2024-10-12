@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Out</title>
+  <title>Profile Page</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
     *{
@@ -19,6 +19,23 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: column;
+      color: #fff;
+    }
+    .profile-container{
+      text-align: center;
+      background-color: #333A40;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    h1{
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    p{
+      font-size: 18px;
+      margin-bottom: 10px;
     }
     #signoutbtn{
       height: 50px;
@@ -31,6 +48,7 @@
       background: #009579;
       cursor: pointer;
       transition: 0.4s;
+      margin-top: 20px;
     }
     #signoutbtn:hover{
       background: #006653;
@@ -38,7 +56,12 @@
   </style>
 </head>
 <body>
-  <input type="button" id="signoutbtn" value="Sign Out">
+  <div class="profile-container">
+    <h1>New Account For:</h1>
+    <p><span id="userEmail">Loading...</span></p>
+    <input type="button" id="signoutbtn" value="Get Started">
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="page1.js" type="module"></script>
